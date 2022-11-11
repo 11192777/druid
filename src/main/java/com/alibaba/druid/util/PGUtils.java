@@ -27,13 +27,11 @@ import java.util.Set;
 
 import javax.sql.XAConnection;
 
-import org.postgresql.core.BaseConnection;
-import org.postgresql.xa.PGXAConnection;
 
 public class PGUtils {
 
     public static XAConnection createXAConnection(Connection physicalConn) throws SQLException {
-        return new PGXAConnection((BaseConnection) physicalConn);
+        return null;
     }
 
     public static List<String> showTables(Connection conn) throws SQLException {

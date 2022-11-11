@@ -24,17 +24,12 @@ import com.alibaba.druid.sql.ast.expr.SQLVariantRefExpr;
 import com.alibaba.druid.sql.ast.statement.SQLDDLStatement;
 import com.alibaba.druid.sql.ast.statement.SQLSelectQueryBlock;
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
-import com.alibaba.druid.sql.dialect.db2.visitor.DB2OutputVisitor;
-import com.alibaba.druid.sql.dialect.h2.visitor.H2OutputVisitor;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlInsertStatement;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlASTVisitor;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlOutputVisitor;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlParameterizedVisitor;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleASTParameterizedVisitor;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleParameterizedOutputVisitor;
-import com.alibaba.druid.sql.dialect.phoenix.visitor.PhoenixOutputVisitor;
-import com.alibaba.druid.sql.dialect.postgresql.visitor.PGOutputVisitor;
-import com.alibaba.druid.sql.dialect.sqlserver.visitor.SQLServerOutputVisitor;
 import com.alibaba.druid.sql.parser.SQLParserFeature;
 import com.alibaba.druid.sql.parser.SQLParserUtils;
 import com.alibaba.druid.sql.parser.SQLSelectListCache;
@@ -396,18 +391,6 @@ public class ParameterizedOutputVisitorUtils {
             case mariadb:
             case elastic_search:
                 return new MySqlOutputVisitor(out, true);
-            case h2:
-                return new H2OutputVisitor(out, true);
-            case postgresql:
-            case edb:
-                return new PGOutputVisitor(out, true);
-            case sqlserver:
-            case jtds:
-                return new SQLServerOutputVisitor(out, true);
-            case db2:
-                return new DB2OutputVisitor(out, true);
-            case phoenix:
-                return new PhoenixOutputVisitor(out, true);
             default:
                 return new SQLASTOutputVisitor(out, true);
         }

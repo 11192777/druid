@@ -20,14 +20,10 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.*;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
-import com.alibaba.druid.sql.dialect.hive.ast.HiveInsert;
-import com.alibaba.druid.sql.dialect.hive.ast.HiveMultiInsertStatement;
-import com.alibaba.druid.sql.dialect.hive.stmt.HiveCreateTableStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.expr.MySqlExpr;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlASTVisitorAdapter;
 import com.alibaba.druid.sql.dialect.oracle.ast.expr.OracleExpr;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleASTVisitorAdapter;
-import com.alibaba.druid.sql.dialect.postgresql.visitor.PGASTVisitorAdapter;
 import com.alibaba.druid.sql.repository.SchemaObject;
 import com.alibaba.druid.sql.repository.SchemaRepository;
 import com.alibaba.druid.stat.TableStat;
@@ -473,34 +469,6 @@ public class SchemaStatVisitor extends SQLASTVisitorAdapter {
         }
     }
 
-    protected class PGOrderByStatVisitor extends PGASTVisitorAdapter {
-
-        private final SQLOrderBy orderBy;
-
-        public PGOrderByStatVisitor(SQLOrderBy orderBy){
-            this.orderBy = orderBy;
-            for (SQLSelectOrderByItem item : orderBy.getItems()) {
-                item.getExpr().setParent(item);
-            }
-        }
-
-        public SQLOrderBy getOrderBy() {
-            return orderBy;
-        }
-
-        public boolean visit(SQLIdentifierExpr x) {
-            return visitOrderBy(x);
-        }
-
-        public boolean visit(SQLPropertyExpr x) {
-            return visitOrderBy(x);
-        }
-
-        public boolean visit(SQLIntegerExpr x) {
-            return visitOrderBy(x);
-        }
-    }
-
     protected class OracleOrderByStatVisitor extends OracleASTVisitorAdapter {
 
         private final SQLOrderBy orderBy;
@@ -603,8 +571,6 @@ public class SchemaStatVisitor extends SQLASTVisitorAdapter {
         switch (dbType) {
             case mysql:
                 return new MySqlOrderByStatVisitor(x);
-            case postgresql:
-                return new PGOrderByStatVisitor(x);
             case oracle:
                 return new OracleOrderByStatVisitor(x);
             default:
@@ -1201,15 +1167,6 @@ public class SchemaStatVisitor extends SQLASTVisitorAdapter {
         SQLTableSource from = x.getFrom();
 
         boolean isHiveMultiInsert = false;
-        if (from == null) {
-            isHiveMultiInsert = x.getParent() != null
-                    && x.getParent().getParent() instanceof HiveInsert
-                    && x.getParent().getParent().getParent() instanceof HiveMultiInsertStatement;
-            if (isHiveMultiInsert) {
-                from = ((HiveMultiInsertStatement) x.getParent().getParent().getParent()).getFrom();
-            }
-        }
-
         if (from == null) {
             for (SQLSelectItem selectItem : x.getSelectList()) {
                 statExpr(
@@ -3151,11 +3108,6 @@ public class SchemaStatVisitor extends SQLASTVisitorAdapter {
 
     public boolean visit(SQLAlterTableArchivePartition x) {
         return true;
-    }
-
-    @Override
-    public boolean visit(HiveCreateTableStatement x) {
-        return visit((SQLCreateTableStatement) x);
     }
 
     @Override

@@ -19,8 +19,6 @@ import com.alibaba.druid.DbType;
 
 public interface JdbcConstants {
 
-    DbType JTDS                       = DbType.jtds;
-
     String MOCK                       = "mock";
 
     DbType HSQL                       = DbType.hsql;
@@ -84,7 +82,7 @@ public interface JdbcConstants {
     String OCEANBASE_DRIVER           = "com.alipay.oceanbase.jdbc.Driver";
 
     DbType INFORMIX                   = DbType.informix;
-    
+
     /**
      * 阿里云odps
      */

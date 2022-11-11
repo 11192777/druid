@@ -18,14 +18,11 @@ package com.alibaba.druid.sql.dialect.mysql.parser;
 import com.alibaba.druid.sql.ast.*;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
-import com.alibaba.druid.sql.dialect.hive.parser.HiveCreateTableParser;
-import com.alibaba.druid.sql.dialect.hive.stmt.HiveCreateTableStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.*;
 import com.alibaba.druid.sql.dialect.mysql.ast.expr.MySqlOutFileExpr;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlSelectQueryBlock;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlUpdateStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlUpdateTableSource;
-import com.alibaba.druid.sql.dialect.sqlserver.ast.SQLServerTop;
 import com.alibaba.druid.sql.parser.*;
 import com.alibaba.druid.util.FnvHash;
 
@@ -73,17 +70,6 @@ public class MySqlSelectParser extends SQLSelectParser {
 
         while (lexer.token() == Token.HINT) {
             lexer.nextToken();
-        }
-
-        if (lexer.token() == Token.TABLE) {
-            HiveCreateTableParser createTableParser = new HiveCreateTableParser(lexer);
-            HiveCreateTableStatement stmt = (HiveCreateTableStatement) createTableParser
-                    .parseCreateTable(false);
-            SQLAdhocTableSource tableSource = new SQLAdhocTableSource(stmt);
-            queryBlock.setFrom(
-                    parseTableSourceRest(tableSource)
-            );
-            return;
         }
 
         if (lexer.token() == Token.UPDATE) { // taobao returning to urgly syntax

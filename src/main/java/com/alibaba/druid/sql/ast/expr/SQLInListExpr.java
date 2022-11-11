@@ -35,11 +35,12 @@ public final class SQLInListExpr extends SQLExprImpl implements SQLReplaceable, 
     protected SQLCommentHint hint;
 
     public SQLInListExpr() {
-
+        super.register();
     }
 
     public SQLInListExpr(SQLExpr expr) {
         this.setExpr(expr);
+        super.register();
     }
 
     public SQLInListExpr(String expr, String... values) {
@@ -49,11 +50,13 @@ public final class SQLInListExpr extends SQLExprImpl implements SQLReplaceable, 
         for (String value : values) {
             targetList.add(new SQLCharExpr(value));
         }
+        super.register();
     }
 
     public SQLInListExpr(SQLExpr expr, boolean not) {
         this.setExpr(expr);
         this.not = not;
+        super.register();
     }
 
     public SQLInListExpr clone() {

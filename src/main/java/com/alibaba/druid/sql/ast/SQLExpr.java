@@ -15,6 +15,7 @@
  */
 package com.alibaba.druid.sql.ast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public interface SQLExpr extends SQLObject, Cloneable {
@@ -22,4 +23,10 @@ public interface SQLExpr extends SQLObject, Cloneable {
     SQLDataType computeDataType();
     List<SQLObject> getChildren();
     SQLCommentHint getHint();
+    default void register() {
+        if (!SQLStatement.registerMap.containsKey(this.getClass())) {
+            SQLStatement.registerMap.put(this.getClass(), new ArrayList<>());
+        }
+        SQLStatement.registerMap.get(this.getClass()).add(this);
+    }
 }

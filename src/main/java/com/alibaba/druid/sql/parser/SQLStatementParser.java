@@ -20,16 +20,10 @@ import com.alibaba.druid.sql.ast.*;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
 import com.alibaba.druid.sql.ast.statement.SQLCreateTriggerStatement.TriggerType;
-import com.alibaba.druid.sql.dialect.hive.ast.HiveInsert;
-import com.alibaba.druid.sql.dialect.hive.ast.HiveInsertStatement;
-import com.alibaba.druid.sql.dialect.hive.ast.HiveMultiInsertStatement;
-import com.alibaba.druid.sql.dialect.hive.stmt.HiveCreateFunctionStatement;
-import com.alibaba.druid.sql.dialect.hive.stmt.HiveMsckRepairStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.FullTextType;
 import com.alibaba.druid.sql.dialect.mysql.ast.MySqlKey;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.*;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlExprParser;
-import com.alibaba.druid.sql.dialect.odps.ast.OdpsAlterTableSetChangeLogs;
 import com.alibaba.druid.sql.dialect.oracle.parser.OracleExprParser;
 import com.alibaba.druid.sql.repository.SchemaRepository;
 import com.alibaba.druid.util.FnvHash;
@@ -56,7 +50,6 @@ import static com.alibaba.druid.sql.parser.Token.LPAREN;
 import static com.alibaba.druid.sql.parser.Token.MULTI_LINE_COMMENT;
 import static com.alibaba.druid.sql.parser.Token.RESTRICT;
 import static com.alibaba.druid.sql.parser.Token.RPAREN;
-import static com.alibaba.druid.sql.parser.Token.SELECT;
 import static com.alibaba.druid.sql.parser.Token.TABLE;
 
 public class SQLStatementParser extends SQLParser {
@@ -2087,11 +2080,6 @@ public class SQLStatementParser extends SQLParser {
                         }
                         accept(Token.RPAREN);
                         stmt.addItem(setOption);
-                    } else if (lexer.identifierEquals("CHANGELOGS") && dbType == DbType.odps) {
-                        lexer.nextToken();
-                        OdpsAlterTableSetChangeLogs item = new OdpsAlterTableSetChangeLogs();
-                        item.setValue(this.exprParser.primary());
-                        stmt.addItem(item);
                     } else {
                         throw new ParserException("TODO " + lexer.info());
                     }
@@ -5270,10 +5258,6 @@ public class SQLStatementParser extends SQLParser {
             SQLInsertStatement insert = (SQLInsertStatement) this.parseInsert();
             insert.setWith(with);
             return insert;
-        } else if (lexer.token == Token.FROM) {
-            HiveMultiInsertStatement insert = (HiveMultiInsertStatement) this.parseInsert();
-            insert.setWith(with);
-            return insert;
         } else if (lexer.token == UPDATE) {
             SQLUpdateStatement update = this.parseUpdateStatement();
             update.setWith(with);
@@ -6187,183 +6171,6 @@ public class SQLStatementParser extends SQLParser {
         this.selectListCache = selectListCache;
     }
 
-    protected HiveInsertStatement parseHiveInsertStmt() {
-        HiveInsertStatement insert = new HiveInsertStatement();
-        insert.setDbType(dbType);
-
-        if (lexer.isKeepComments() && lexer.hasComment()) {
-            insert.addBeforeComment(lexer.readAndResetComments());
-        }
-
-        SQLSelectParser selectParser = createSQLSelectParser();
-
-        accept(Token.INSERT);
-
-        if (lexer.token == Token.INTO) {
-            lexer.nextToken();
-        } else {
-            accept(Token.OVERWRITE);
-            insert.setOverwrite(true);
-        }
-
-        if (lexer.token == Token.TABLE) {
-            lexer.nextToken();
-        }
-        insert.setTableSource(this.exprParser.name());
-
-        boolean columnsParsed = false;
-
-        if (lexer.token == (Token.LPAREN)) {
-            Lexer.SavePoint mark = lexer.mark();
-            lexer.nextToken();
-            if (lexer.token == Token.SELECT) {
-                lexer.reset(mark);
-            } else {
-                parseInsertColumns(insert);
-                columnsParsed = true;
-                accept(Token.RPAREN);
-            }
-        }
-
-        if (lexer.token == Token.PARTITION) {
-            lexer.nextToken();
-            accept(Token.LPAREN);
-            for (;;) {
-                SQLAssignItem ptExpr = new SQLAssignItem();
-                ptExpr.setTarget(this.exprParser.name());
-                if (lexer.token == Token.EQ ||lexer.token == Token.EQEQ) {
-                    lexer.nextTokenValue();
-                    SQLExpr ptValue = this.exprParser.expr();
-                    ptExpr.setValue(ptValue);
-                }
-                insert.addPartition(ptExpr);
-                if (!(lexer.token == (Token.COMMA))) {
-                    break;
-                } else {
-                    lexer.nextToken();
-                }
-            }
-            accept(Token.RPAREN);
-        }
-
-        if (!columnsParsed && lexer.token == Token.LPAREN) {
-            Lexer.SavePoint savePoint = lexer.mark();
-
-            lexer.nextToken();
-            if (lexer.token != SELECT) {
-                parseInsertColumns(insert);
-                accept(Token.RPAREN);
-            } else {
-                lexer.reset(savePoint);
-            }
-        }
-
-        if (lexer.token == Token.IF) {
-            lexer.nextToken();
-            accept(Token.NOT);
-            accept(Token.EXISTS);
-            insert.setIfNotExists(true);
-        }
-
-        if (lexer.token == Token.VALUES) {
-            lexer.nextToken();
-
-            for (;;) {
-                if (lexer.token == Token.LPAREN) {
-                    lexer.nextToken();
-
-                    SQLInsertStatement.ValuesClause values = new SQLInsertStatement.ValuesClause();
-                    this.exprParser.exprList(values.getValues(), values);
-                    insert.addValueCause(values);
-                    accept(Token.RPAREN);
-                }
-
-                if (lexer.token == Token.COMMA) {
-                    lexer.nextToken();
-                    continue;
-                } else {
-                    break;
-                }
-            }
-        } else {
-            SQLSelect query = selectParser.select();
-            insert.setQuery(query);
-        }
-
-        return insert;
-    }
-
-    protected HiveInsert parseHiveInsert() {
-        HiveInsert insert = new HiveInsert();
-
-        if (lexer.isKeepComments() && lexer.hasComment()) {
-            insert.addBeforeComment(lexer.readAndResetComments());
-        }
-
-        SQLSelectParser selectParser = createSQLSelectParser();
-
-        accept(Token.INSERT);
-
-        if (lexer.token == Token.INTO) {
-            lexer.nextToken();
-        } else {
-            accept(Token.OVERWRITE);
-            insert.setOverwrite(true);
-        }
-
-        if (lexer.token == Token.TABLE) {
-            lexer.nextToken();
-        }
-        insert.setTableSource(this.exprParser.name());
-
-        if (lexer.token == Token.PARTITION) {
-            lexer.nextToken();
-            accept(Token.LPAREN);
-            for (;;) {
-                SQLAssignItem ptExpr = new SQLAssignItem();
-                ptExpr.setTarget(this.exprParser.name());
-                if (lexer.token == Token.EQ) {
-                    lexer.nextToken();
-                    SQLExpr ptValue = this.exprParser.expr();
-                    ptExpr.setValue(ptValue);
-                }
-                insert.addPartition(ptExpr);
-                if (lexer.token != Token.COMMA) {
-                    break;
-                } else {
-                    lexer.nextToken();
-                }
-            }
-            accept(Token.RPAREN);
-        }
-
-        if (lexer.token == Token.VALUES) {
-            lexer.nextToken();
-
-            for (;;) {
-                if (lexer.token == Token.LPAREN) {
-                    lexer.nextToken();
-
-                    SQLInsertStatement.ValuesClause values = new SQLInsertStatement.ValuesClause();
-                    this.exprParser.exprList(values.getValues(), values);
-                    insert.addValueCause(values);
-                    accept(Token.RPAREN);
-                }
-
-                if (lexer.token == Token.COMMA) {
-                    lexer.nextToken();
-                    continue;
-                } else {
-                    break;
-                }
-            }
-        } else {
-            SQLSelect query = selectParser.select();
-            insert.setQuery(query);
-        }
-
-        return insert;
-    }
 
     protected SQLShowDatabasesStatement parseShowDatabases(boolean isPhysical) {
         SQLShowDatabasesStatement stmt = new SQLShowDatabasesStatement();
@@ -6695,35 +6502,6 @@ public class SQLStatementParser extends SQLParser {
         return stmt;
     }
 
-    protected SQLStatement parseMsck() {
-        lexer.nextToken();
-        lexer.identifierEquals("REPAIR");
-
-        lexer.nextToken();
-
-        HiveMsckRepairStatement stmt = new HiveMsckRepairStatement();
-
-        if (lexer.token() == Token.DATABASE || lexer.token() == Token.SCHEMA) {
-            lexer.nextToken();
-            SQLName name = this.exprParser.name();
-            stmt.setDatabase(name);
-        }
-
-        if (lexer.token() == Token.TABLE) {
-            lexer.nextToken();
-
-            SQLExpr tableExpr = this.exprParser.expr();
-            stmt.setTable(tableExpr);
-        }
-
-        if (lexer.identifierEquals(FnvHash.Constants.ADD)) {
-            lexer.nextToken();
-            acceptIdentifier("PARTITIONS");
-            stmt.setAddPartitions(true);
-        }
-
-        return stmt;
-    }
 
     protected SQLStatement parseCreateResourceGroup()
     {
@@ -6919,62 +6697,6 @@ public class SQLStatementParser extends SQLParser {
 
         return stmt;
     }
-
-    public SQLCreateFunctionStatement parseHiveCreateFunction() {
-        HiveCreateFunctionStatement stmt = new HiveCreateFunctionStatement();
-        stmt.setDbType(dbType);
-
-        accept(Token.CREATE);
-        if (lexer.identifierEquals(FnvHash.Constants.TEMPORARY)) {
-            lexer.nextToken();
-            stmt.setTemporary(true);
-        }
-        accept(Token.FUNCTION);
-
-        SQLName name = this.exprParser.name();
-        stmt.setName(name);
-
-        if (lexer.token() == Token.AS) {
-            lexer.setToken(Token.IDENTIFIER);
-            lexer.nextToken();
-            SQLExpr className = this.exprParser.expr();
-            stmt.setClassName(className);
-        }
-
-        if (lexer.identifierEquals(FnvHash.Constants.LOCATION)) {
-            lexer.nextToken();
-            SQLExpr location = this.exprParser.primary();
-            stmt.setLocationn(location);
-        }
-
-        if (lexer.identifierEquals(FnvHash.Constants.SYMBOL)) {
-            lexer.nextToken();
-            accept(Token.EQ);
-            SQLExpr symbol = this.exprParser.primary();
-            stmt.setSymbol(symbol);
-        }
-
-        if (lexer.token() == Token.USING || lexer.hash_lower() == Constants.USING) {
-            lexer.nextToken();
-
-            if (lexer.identifierEquals(FnvHash.Constants.JAR)) {
-                lexer.nextToken();
-                stmt.setResourceType(HiveCreateFunctionStatement.ResourceType.JAR);
-            } else if (lexer.identifierEquals(FnvHash.Constants.ARCHIVE)) {
-                lexer.nextToken();
-                stmt.setResourceType(HiveCreateFunctionStatement.ResourceType.ARCHIVE);
-            } else if (lexer.identifierEquals(FnvHash.Constants.FILE)) {
-                lexer.nextToken();
-                stmt.setResourceType(HiveCreateFunctionStatement.ResourceType.FILE);
-            }
-
-            SQLExpr location = this.exprParser.primary();
-            stmt.setLocationn(location);
-        }
-
-        return stmt;
-    }
-
 
     protected SQLShowCreateTableStatement parseShowCreateTable() {
         lexer.nextToken();

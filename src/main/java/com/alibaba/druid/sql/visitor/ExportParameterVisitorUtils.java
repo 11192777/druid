@@ -19,11 +19,8 @@ import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLObject;
 import com.alibaba.druid.sql.ast.expr.*;
-import com.alibaba.druid.sql.dialect.db2.visitor.DB2ExportParameterVisitor;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlExportParameterVisitor;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleExportParameterVisitor;
-import com.alibaba.druid.sql.dialect.postgresql.visitor.PGExportParameterVisitor;
-import com.alibaba.druid.sql.dialect.sqlserver.visitor.MSSQLServerExportParameterVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,20 +39,9 @@ public final class ExportParameterVisitorUtils {
 
         switch (dbType) {
             case mysql:
-            case mariadb:
                 return new MySqlExportParameterVisitor(out);
             case oracle:
                 return new OracleExportParameterVisitor(out);
-            case db2:
-                return new DB2ExportParameterVisitor(out);
-            case h2:
-                return new MySqlExportParameterVisitor(out);
-            case sqlserver:
-            case jtds:
-                return new MSSQLServerExportParameterVisitor(out);
-            case postgresql:
-            case edb:
-                return new PGExportParameterVisitor(out);
             default:
                 return new ExportParameterizedOutputVisitor(out);
         }

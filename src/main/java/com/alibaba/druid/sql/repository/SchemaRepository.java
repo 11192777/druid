@@ -27,7 +27,6 @@ import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
 import com.alibaba.druid.sql.ast.expr.SQLIntegerExpr;
 import com.alibaba.druid.sql.ast.expr.SQLPropertyExpr;
 import com.alibaba.druid.sql.ast.statement.*;
-import com.alibaba.druid.sql.dialect.hive.stmt.HiveCreateTableStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlCreateTableStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlRenameTableStatement;
 import com.alibaba.druid.sql.ast.statement.SQLShowColumnsStatement;
@@ -392,28 +391,10 @@ public class SchemaRepository {
         SchemaResolveVisitor resolveVisitor;
         switch (dbType) {
             case mysql:
-            case mariadb:
-            case sqlite:
                 resolveVisitor = new SchemaResolveVisitorFactory.MySqlResolveVisitor(this, optionsValue);
                 break;
             case oracle:
                 resolveVisitor = new SchemaResolveVisitorFactory.OracleResolveVisitor(this, optionsValue);
-                break;
-            case db2:
-                resolveVisitor = new SchemaResolveVisitorFactory.DB2ResolveVisitor(this, optionsValue);
-                break;
-            case odps:
-                resolveVisitor = new SchemaResolveVisitorFactory.OdpsResolveVisitor(this, optionsValue);
-                break;
-            case hive:
-                resolveVisitor = new SchemaResolveVisitorFactory.HiveResolveVisitor(this, optionsValue);
-                break;
-            case postgresql:
-            case edb:
-                resolveVisitor = new SchemaResolveVisitorFactory.PGResolveVisitor(this, optionsValue);
-                break;
-            case sqlserver:
-                resolveVisitor = new SchemaResolveVisitorFactory.SQLServerResolveVisitor(this, optionsValue);
                 break;
             default:
                 resolveVisitor = new SchemaResolveVisitorFactory.SQLResolveVisitor(this, optionsValue);
@@ -626,11 +607,6 @@ public class SchemaRepository {
             return false;
         }
 
-        public boolean visit(HiveCreateTableStatement x) {
-            acceptCreateTable(x);
-            return false;
-        }
-
         public boolean visit(MySqlCreateTableStatement x) {
             acceptCreateTable(x);
             return false;
@@ -758,11 +734,6 @@ public class SchemaRepository {
         }
 
         public boolean visit(SQLCreateTableStatement x) {
-            acceptCreateTable(x);
-            return false;
-        }
-
-        public boolean visit(HiveCreateTableStatement x) {
             acceptCreateTable(x);
             return false;
         }

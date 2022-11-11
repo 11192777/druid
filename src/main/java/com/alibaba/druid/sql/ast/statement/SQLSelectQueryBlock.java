@@ -19,10 +19,6 @@ import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.*;
 import com.alibaba.druid.sql.ast.expr.*;
-import com.alibaba.druid.sql.dialect.odps.ast.OdpsUDTFSQLSelectItem;
-import com.alibaba.druid.sql.parser.Lexer;
-import com.alibaba.druid.sql.parser.SQLParserUtils;
-import com.alibaba.druid.sql.visitor.SQLASTOutputVisitor;
 import com.alibaba.druid.sql.visitor.SQLASTVisitor;
 import com.alibaba.druid.sql.visitor.SQLASTVisitorAdapter;
 import com.alibaba.druid.util.FnvHash;
@@ -293,7 +289,7 @@ public class SQLSelectQueryBlock extends SQLObjectImpl implements SQLSelectQuery
 
         groupBy.addHaving(condition);
     }
-    
+
     public SQLOrderBy getOrderBy() {
         return orderBy;
     }
@@ -302,7 +298,7 @@ public class SQLSelectQueryBlock extends SQLObjectImpl implements SQLSelectQuery
         if (orderBy != null) {
             orderBy.setParent(this);
         }
-        
+
         this.orderBy = orderBy;
     }
 
@@ -429,7 +425,7 @@ public class SQLSelectQueryBlock extends SQLObjectImpl implements SQLSelectQuery
     public SQLSelectItem getSelectItem(int i) {
         return this.selectList.get(i);
     }
-    
+
     public void addSelectItem(SQLSelectItem item) {
         this.selectList.add(item);
         item.setParent(this);
@@ -514,13 +510,13 @@ public class SQLSelectQueryBlock extends SQLObjectImpl implements SQLSelectQuery
     }
 
     public boolean isParenthesized() {
-		return parenthesized;
-	}
+        return parenthesized;
+    }
 
-	public void setParenthesized(boolean parenthesized) {
-		this.parenthesized = parenthesized;
-	}
-	
+    public void setParenthesized(boolean parenthesized) {
+        this.parenthesized = parenthesized;
+    }
+
     public boolean isForUpdate() {
         return forUpdate;
     }
@@ -528,7 +524,7 @@ public class SQLSelectQueryBlock extends SQLObjectImpl implements SQLSelectQuery
     public void setForUpdate(boolean forUpdate) {
         this.forUpdate = forUpdate;
     }
-    
+
     public boolean isNoWait() {
         return noWait;
     }
@@ -556,7 +552,7 @@ public class SQLSelectQueryBlock extends SQLObjectImpl implements SQLSelectQuery
     public SQLExpr getWaitTime() {
         return waitTime;
     }
-    
+
     public void setWaitTime(SQLExpr waitTime) {
         if (waitTime != null) {
             waitTime.setParent(this);
@@ -708,7 +704,7 @@ public class SQLSelectQueryBlock extends SQLObjectImpl implements SQLSelectQuery
         this.sortBy.add(item);
     }
 
-	@Override
+    @Override
     protected void accept0(SQLASTVisitor visitor) {
         if (visitor.visit(this)) {
             for (int i = 0; i < this.selectList.size(); i++) {
@@ -1402,18 +1398,7 @@ public class SQLSelectQueryBlock extends SQLObjectImpl implements SQLSelectQuery
         List<String> aliasList = new ArrayList<String>();
 
         for (SQLSelectItem item : this.selectList) {
-            if (item instanceof OdpsUDTFSQLSelectItem) {
-                aliasList.addAll(((OdpsUDTFSQLSelectItem) item).getAliasList());
-            } else {
-                SQLExpr expr = item.getExpr();
-                if (expr instanceof SQLAllColumnExpr) {
-                    // TODO
-                } else if (expr instanceof SQLPropertyExpr && ((SQLPropertyExpr) expr).getName().equals("*")) {
-                    // TODO
-                } else {
-                    aliasList.add(item.computeAlias());
-                }
-            }
+            aliasList.add(item.computeAlias());
         }
 
         return aliasList;

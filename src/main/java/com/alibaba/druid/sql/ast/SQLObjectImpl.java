@@ -19,7 +19,6 @@ import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.dialect.mysql.ast.MySqlObject;
 import com.alibaba.druid.sql.dialect.oracle.ast.OracleSQLObject;
-import com.alibaba.druid.sql.dialect.postgresql.ast.PGSQLObject;
 import com.alibaba.druid.sql.visitor.SQLASTVisitor;
 
 import java.util.ArrayList;
@@ -81,8 +80,6 @@ public abstract class SQLObjectImpl implements SQLObject {
             dbType = DbType.oracle;
         } else if (this instanceof MySqlObject) {
             dbType = DbType.mysql;
-        } else if (this instanceof PGSQLObject) {
-            dbType = DbType.postgresql;
         } else if (this instanceof SQLDbTypedObject) {
             dbType = ((SQLDbTypedObject) this).getDbType();
         }

@@ -18,7 +18,9 @@ package com.alibaba.druid.sql.ast;
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.visitor.VisitorFeature;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public interface SQLStatement extends SQLObject, SQLDbTypedObject {
     DbType       getDbType();
@@ -31,6 +33,5 @@ public interface SQLStatement extends SQLObject, SQLDbTypedObject {
 
     String toString();
     String toString(VisitorFeature... features);
-    String toLowerCaseString();
-    String toParameterizedString();
+    Map<Class<?>, List<SQLExpr>> registerMap = new HashMap<>();
 }

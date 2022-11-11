@@ -19,32 +19,14 @@ import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.ast.*;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
-import com.alibaba.druid.sql.dialect.ads.visitor.AdsOutputVisitor;
-import com.alibaba.druid.sql.dialect.antspark.visitor.AntsparkOutputVisitor;
-import com.alibaba.druid.sql.dialect.antspark.visitor.AntsparkSchemaStatVisitor;
-import com.alibaba.druid.sql.dialect.blink.vsitor.BlinkOutputVisitor;
-import com.alibaba.druid.sql.dialect.clickhouse.visitor.ClickSchemaStatVisitor;
-import com.alibaba.druid.sql.dialect.clickhouse.visitor.ClickhouseOutputVisitor;
-import com.alibaba.druid.sql.dialect.db2.visitor.DB2OutputVisitor;
-import com.alibaba.druid.sql.dialect.db2.visitor.DB2SchemaStatVisitor;
-import com.alibaba.druid.sql.dialect.h2.visitor.H2OutputVisitor;
-import com.alibaba.druid.sql.dialect.h2.visitor.H2SchemaStatVisitor;
-import com.alibaba.druid.sql.dialect.hive.visitor.HiveOutputVisitor;
-import com.alibaba.druid.sql.dialect.hive.visitor.HiveSchemaStatVisitor;
 import com.alibaba.druid.sql.dialect.mysql.ast.MySqlObject;
 import com.alibaba.druid.sql.dialect.mysql.ast.clause.MySqlSelectIntoStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlInsertStatement;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlOutputVisitor;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlSchemaStatVisitor;
-import com.alibaba.druid.sql.dialect.odps.visitor.OdpsOutputVisitor;
-import com.alibaba.druid.sql.dialect.odps.visitor.OdpsSchemaStatVisitor;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleOutputVisitor;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleSchemaStatVisitor;
 import com.alibaba.druid.sql.dialect.oracle.visitor.OracleToMySqlOutputVisitor;
-import com.alibaba.druid.sql.dialect.postgresql.visitor.PGOutputVisitor;
-import com.alibaba.druid.sql.dialect.postgresql.visitor.PGSchemaStatVisitor;
-import com.alibaba.druid.sql.dialect.sqlserver.visitor.SQLServerOutputVisitor;
-import com.alibaba.druid.sql.dialect.sqlserver.visitor.SQLServerSchemaStatVisitor;
 import com.alibaba.druid.sql.parser.*;
 import com.alibaba.druid.sql.repository.SchemaRepository;
 import com.alibaba.druid.sql.visitor.SQLASTOutputVisitor;
@@ -63,7 +45,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 public class SQLUtils {
-    public final static Charset UTF8                             = Charset.forName("UTF-8");
+    public final static Charset UTF8 = Charset.forName("UTF-8");
 
     private final static SQLParserFeature[] FORMAT_DEFAULT_FEATURES = {
             SQLParserFeature.KeepComments,
@@ -479,27 +461,6 @@ public class SQLUtils {
             case mysql:
             case mariadb:
                 return new MySqlOutputVisitor(out);
-            case postgresql:
-                return new PGOutputVisitor(out);
-            case sqlserver:
-            case jtds:
-                return new SQLServerOutputVisitor(out);
-            case db2:
-                return new DB2OutputVisitor(out);
-            case odps:
-                return new OdpsOutputVisitor(out);
-            case h2:
-                return new H2OutputVisitor(out);
-            case hive:
-                return new HiveOutputVisitor(out);
-            case ads:
-                return new AdsOutputVisitor(out);
-            case blink:
-                return new BlinkOutputVisitor(out);
-            case antspark:
-                return new AntsparkOutputVisitor(out);
-            case clickhouse:
-                return new ClickhouseOutputVisitor(out);
             default:
                 return new SQLASTOutputVisitor(out, dbType);
         }
@@ -534,23 +495,6 @@ public class SQLUtils {
             case mariadb:
             case elastic_search:
                 return new MySqlSchemaStatVisitor(repository);
-            case postgresql:
-                return new PGSchemaStatVisitor(repository);
-            case sqlserver:
-            case jtds:
-                return new SQLServerSchemaStatVisitor(repository);
-            case db2:
-                return new DB2SchemaStatVisitor(repository);
-            case odps:
-                return new OdpsSchemaStatVisitor(repository);
-            case h2:
-                return new H2SchemaStatVisitor(repository);
-            case hive:
-                return new HiveSchemaStatVisitor(repository);
-            case antspark:
-                return new AntsparkSchemaStatVisitor(repository);
-            case clickhouse:
-                return new ClickSchemaStatVisitor(repository);
             default:
                 return new SchemaStatVisitor(repository);
         }

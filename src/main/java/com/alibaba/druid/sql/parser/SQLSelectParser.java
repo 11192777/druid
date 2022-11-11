@@ -19,9 +19,6 @@ import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.ast.*;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
-import com.alibaba.druid.sql.dialect.db2.ast.stmt.DB2SelectQueryBlock;
-import com.alibaba.druid.sql.dialect.hive.parser.HiveCreateTableParser;
-import com.alibaba.druid.sql.dialect.hive.stmt.HiveCreateTableStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.expr.MySqlOrderingExpr;
 import com.alibaba.druid.util.FnvHash;
 import com.alibaba.druid.util.StringUtils;
@@ -885,22 +882,6 @@ public class SQLSelectParser extends SQLParser {
                 } else if(lexer.identifierEquals(FnvHash.Constants.ROLLUP)) {
                     lexer.nextToken();
                     groupBy.setWithRollUp(true);
-                } else if (lexer.identifierEquals(FnvHash.Constants.RS)
-                        && DbType.db2 == dbType) {
-                    lexer.nextToken();
-                    ((DB2SelectQueryBlock) queryBlock).setIsolation(DB2SelectQueryBlock.Isolation.RS);
-                } else if (lexer.identifierEquals(FnvHash.Constants.RR)
-                        && DbType.db2 == dbType) {
-                    lexer.nextToken();
-                    ((DB2SelectQueryBlock) queryBlock).setIsolation(DB2SelectQueryBlock.Isolation.RR);
-                } else if (lexer.identifierEquals(FnvHash.Constants.CS)
-                        && DbType.db2 == dbType) {
-                    lexer.nextToken();
-                    ((DB2SelectQueryBlock) queryBlock).setIsolation(DB2SelectQueryBlock.Isolation.CS);
-                } else if (lexer.identifierEquals(FnvHash.Constants.UR)
-                        && DbType.db2 == dbType) {
-                    lexer.nextToken();
-                    ((DB2SelectQueryBlock) queryBlock).setIsolation(DB2SelectQueryBlock.Isolation.UR);
                 } else {
                     lexer.reset(mark);
                 }
@@ -1459,13 +1440,7 @@ public class SQLSelectParser extends SQLParser {
                         accept(Token.RPAREN);
                     }
                 }
-            } else if (lexer.token() == Token.TABLE) {
-                HiveCreateTableParser createTableParser = new HiveCreateTableParser(lexer);
-                HiveCreateTableStatement stmt = (HiveCreateTableStatement) createTableParser
-                        .parseCreateTable(false);
-                rightTableSource = new SQLAdhocTableSource(stmt);
-                primaryTableSourceRest(rightTableSource);
-            } else {
+            }  else {
                 if (lexer.identifierEquals(FnvHash.Constants.UNNEST)) {
                     Lexer.SavePoint mark = lexer.mark();
                     lexer.nextToken();

@@ -30,7 +30,6 @@ import javax.sql.XAConnection;
 import javax.transaction.xa.XAException;
 
 import com.alibaba.druid.DbType;
-import com.alibaba.druid.pool.DruidPooledConnection;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.statement.SQLCreateTableStatement;
 import com.alibaba.druid.support.logging.Log;
@@ -109,9 +108,8 @@ public class OracleUtils {
         return unwrapped;
     }
 
-    public static short getVersionNumber(DruidPooledConnection conn) throws SQLException {
-        oracle.jdbc.internal.OracleConnection oracleConn = (oracle.jdbc.internal.OracleConnection) unwrap(conn);
-        return oracleConn.getVersionNumber();
+    public static short getVersionNumber() throws SQLException {
+        return 1;
     }
 
     public static void setDefaultRowPrefetch(Connection conn, int value) throws SQLException {
