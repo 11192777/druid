@@ -388,8 +388,6 @@ public class ParameterizedOutputVisitorUtils {
             case oceanbase_oracle:
                 return new OracleParameterizedOutputVisitor(out);
             case mysql:
-            case mariadb:
-            case elastic_search:
                 return new MySqlOutputVisitor(out, true);
             default:
                 return new SQLASTOutputVisitor(out, true);

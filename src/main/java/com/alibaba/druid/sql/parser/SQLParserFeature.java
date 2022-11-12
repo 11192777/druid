@@ -50,7 +50,6 @@ public enum SQLParserFeature {
     PrintSQLWhileParsingFailed,
     EnableMultiUnion,
 
-    Spark,
     Presto,
     ;
 

@@ -412,20 +412,6 @@ public class SQLSelectParser extends SQLParser {
             lexer.nextToken();
         }
 
-        if (DbType.informix == dbType) {
-            if (lexer.identifierEquals(FnvHash.Constants.SKIP)) {
-                lexer.nextToken();
-                SQLExpr offset = this.exprParser.primary();
-                queryBlock.setOffset(offset);
-            }
-
-            if (lexer.identifierEquals(FnvHash.Constants.FIRST)) {
-                lexer.nextToken();
-                SQLExpr first = this.exprParser.primary();
-                queryBlock.setFirst(first);
-            }
-        }
-
         if (lexer.token == Token.DISTINCT) {
             queryBlock.setDistionOption(SQLSetQuantifier.DISTINCT);
             lexer.nextToken();
@@ -809,11 +795,7 @@ public class SQLSelectParser extends SQLParser {
                 Lexer.SavePoint mark = lexer.mark();
                 lexer.nextToken();
                 if (!lexer.identifierEquals(FnvHash.Constants.GROUPING)) {
-                    if (dbType == DbType.odps) {
-                        lexer.reset(mark);
-                    } else {
-                        throw new ParserException("group by all syntax error. " + lexer.info());
-                    }
+                    throw new ParserException("group by all syntax error. " + lexer.info());
                 }
             } else if (lexer.token == Token.DISTINCT) {
                 lexer.nextToken();
@@ -849,20 +831,6 @@ public class SQLSelectParser extends SQLParser {
             if (groupBy.isWithRollUp() || groupBy.isWithCube()) {
                 accept(Token.RPAREN);
                 groupBy.setParen(true);
-
-                if (lexer.token == Token.COMMA && dbType == DbType.odps) {
-                    lexer.nextToken();
-                    SQLMethodInvokeExpr func = new SQLMethodInvokeExpr(groupBy.isWithCube() ? "CUBE" : "ROLLUP");
-                    func.getArguments().addAll(groupBy.getItems());
-                    groupBy.getItems().clear();
-                    groupBy.setWithCube(false);
-                    groupBy.setWithRollUp(false);
-                    for (SQLExpr arg : func.getArguments()) {
-                        arg.setParent(func);
-                    }
-                    groupBy.addItem(func);
-                    this.exprParser.exprList(groupBy.getItems(), groupBy);
-                }
             }
 
             if (lexer.token == (Token.HAVING)) {
@@ -1294,11 +1262,6 @@ public class SQLSelectParser extends SQLParser {
         }
 
         boolean asof = false;
-        if (lexer.identifierEquals(FnvHash.Constants.ASOF) && dbType == DbType.clickhouse) {
-            lexer.nextToken();
-            asof = true;
-        }
-
         if (lexer.token == Token.OUTER) {
             Lexer.SavePoint mark = lexer.mark();
             String str = lexer.stringVal();
@@ -1411,8 +1374,7 @@ public class SQLSelectParser extends SQLParser {
             SQLTableSource rightTableSource = null;
             if (lexer.token == Token.LPAREN) {
                 lexer.nextToken();
-                if (lexer.token == Token.SELECT
-                        || (lexer.token == Token.FROM && (dbType == DbType.odps || dbType == DbType.hive))) {
+                if (lexer.token == Token.SELECT) {
                     SQLSelect select = this.select();
                     rightTableSource = new SQLSubqueryTableSource(select);
                 } else {
@@ -1589,25 +1551,6 @@ public class SQLSelectParser extends SQLParser {
 
                     SQLExpr joinOn2 = expr();
                     join.addCondition(joinOn2);
-                }
-
-                if (dbType == DbType.odps && lexer.identifierEquals(FnvHash.Constants.USING)) {
-                    SQLJoinTableSource.UDJ udj = new SQLJoinTableSource.UDJ();
-                    lexer.nextToken();
-                    udj.setFunction(lexer.stringVal());
-                    accept(Token.IDENTIFIER);
-                    accept(Token.LPAREN);
-                    this.exprParser.exprList(udj.getArguments(), udj);
-                    accept(Token.RPAREN);
-
-                    udj.setAlias(alias());
-
-                    accept(Token.AS);
-                    accept(Token.LPAREN);
-                    this.exprParser.names(udj.getColumns(), udj);
-                    accept(Token.RPAREN);
-
-                    join.setUdj(udj);
                 }
             } else if (lexer.token == Token.USING
                     || lexer.identifierEquals(FnvHash.Constants.USING)) {

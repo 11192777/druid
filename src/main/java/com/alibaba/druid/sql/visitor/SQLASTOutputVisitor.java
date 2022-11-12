@@ -2436,11 +2436,6 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
             print(' ');
         }
 
-        final boolean informix =DbType.informix == dbType;
-        if (informix) {
-            printFetchFirst(x);
-        }
-
         final int distinctOption = x.getDistionOption();
         if (SQLSetQuantifier.ALL == distinctOption) {
             print0(ucase ? "ALL " : "all ");
@@ -2526,9 +2521,7 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
             printAndAccept(clusterBy, ", ");
         }
 
-        if (!informix) {
-            printFetchFirst(x);
-        }
+        printFetchFirst(x);
 
         if (x.isForUpdate()) {
             println();
@@ -2547,18 +2540,7 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         SQLExpr offset = limit.getOffset();
         SQLExpr first = limit.getRowCount();
 
-        if (DbType.informix == dbType) {
-            if (offset != null) {
-                print0(ucase ? "SKIP " : "skip ");
-                offset.accept(this);
-            }
-
-            print0(ucase ? " FIRST " : " first ");
-            first.accept(this);
-            print(' ');
-        } else if (DbType.db2 == dbType
-                || DbType.oracle == dbType
-                || DbType.sqlserver == dbType) {
+        if (DbType.oracle == dbType) {
             //order by 语句必须在FETCH FIRST ROWS ONLY之前
             SQLObject parent = x.getParent();
             if (parent instanceof SQLSelect) {
@@ -2582,11 +2564,7 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
                 if (offset != null) {
                     print(' ');
                 }
-                if (DbType.sqlserver == dbType && offset != null) {
-                    print0(ucase ? "FETCH NEXT " : "fetch next ");
-                } else {
-                    print0(ucase ? "FETCH FIRST " : "fetch first ");
-                }
+                print0(ucase ? "FETCH FIRST " : "fetch first ");
                 first.accept(this);
                 print0(ucase ? " ROWS ONLY" : " rows only");
             }
@@ -3250,11 +3228,7 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
 
         SQLColumnDefinition.Identity identity = x.getIdentity();
         if (identity != null) {
-            if (dbType == DbType.h2) {
-                print0(ucase ? " AS " : " as ");
-            } else {
-                print(' ');
-            }
+            print(' ');
             identity.accept(this);
         }
 
@@ -3381,11 +3355,7 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         if (x.isUpsert()) {
             print0(ucase ? "UPSERT INTO " : "upsert into ");
         } else {
-            if (x.isOverwrite() && dbType == DbType.odps) {
-                print0(ucase ? "INSERT OVERWRITE " : "insert overwrite ");
-            } else {
-                print0(ucase ? "INSERT INTO " : "insert into ");
-            }
+            print0(ucase ? "INSERT INTO " : "insert into ");
         }
 
         x.getTableSource().accept(this);
@@ -3942,10 +3912,6 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         if (value != null) {
             print0(" = ");
             value.accept(this);
-        } else {
-            if (dbType == DbType.odps) {
-                print0(" = ");
-            }
         }
         return false;
     }
@@ -3989,7 +3955,6 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         if (left instanceof SQLJoinTableSource
                 && ((SQLJoinTableSource) left).getJoinType() == JoinType.COMMA
                 && x.getJoinType() != JoinType.COMMA
-                && DbType.postgresql != dbType
                 && ((SQLJoinTableSource) left).getAttribute("ads.comma_join") == null) {
             print('(');
             printTableSource(left);
@@ -4497,17 +4462,10 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         return false;
     }
 
-    protected boolean isOdps() {
-        return DbType.odps == dbType;
-    }
 
     @Override
     public boolean visit(SQLAlterTableAddColumn x) {
-        if (DbType.odps == dbType || DbType.hive == dbType) {
-            print0(ucase ? "ADD COLUMNS (" : "add columns (");
-        } else {
-            print0(ucase ? "ADD (" : "add (");
-        }
+        print0(ucase ? "ADD (" : "add (");
         printAndAccept(x.getColumns(), ", ");
         print(')');
 
@@ -4721,12 +4679,9 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         }
 
         if (x.getDbProperties().size() > 0) {
-            if (dbType == DbType.mysql || dbType == DbType.presto || dbType == DbType.ads || dbType == DbType.mariadb) {
+            if (dbType == DbType.mysql) {
                 println();
                 print0(ucase ? "WITH (" : "with (");
-            } else if (dbType == DbType.hive) {
-                println();
-                print0(ucase ? "WITH DBPROPERTIES (" : "with dbproperties (");
             } else {
                 println();
                 print0(ucase ? "WITH PROPERTIES (" : "with properties (");
@@ -5274,13 +5229,7 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
 
     @Override
     public boolean visit(SQLAlterTableAlterColumn x) {
-        if (DbType.odps == dbType) {
-            print0(ucase ? "CHANGE COLUMN " : "change column ");
-        } else  if (DbType.hive == dbType) {
-            print0(ucase ? "CHANGE " : "change ");
-        } else {
-            print0(ucase ? "ALTER COLUMN " : "alter column ");
-        }
+        print0(ucase ? "ALTER COLUMN " : "alter column ");
 
         SQLName originColumn = x.getOriginColumn();
         if (originColumn != null) {
@@ -5462,13 +5411,7 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
             SQLAlterTableItem item = x.getItems().get(i);
             if (i != 0) {
                 SQLAlterTableItem former = x.getItems().get(i - 1);
-                if (this.dbType == DbType.hive
-                        && former instanceof SQLAlterTableAddPartition
-                        && item instanceof SQLAlterTableAddPartition) {
-                    // ignore comma
-                } else {
-                    print(',');
-                }
+                print(',');
             }
             println();
             item.accept(this);
@@ -5918,10 +5861,6 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
 
         if (x.getUsers() != null) {
             print0(ucase ? " FROM " : " from ");
-
-            if (dbType == DbType.odps) {
-                print0(ucase ? "USER " : "user ");
-            }
 
             printAndAccept(x.getUsers(), ", ");
         }
@@ -7771,11 +7710,7 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         }
 
         if (x.isNoMaxValue()) {
-            if (DbType.postgresql == dbType) {
-                print0(ucase ? " NO MAXVALUE" : " no maxvalue");
-            } else {
-                print0(ucase ? " NOMAXVALUE" : " nomaxvalue");
-            }
+            print0(ucase ? " NOMAXVALUE" : " nomaxvalue");
         }
 
         if (x.getMinValue() != null) {
@@ -7784,22 +7719,14 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         }
 
         if (x.isNoMinValue()) {
-            if (DbType.postgresql == dbType) {
-                print0(ucase ? " NO MINVALUE" : " no minvalue");
-            } else {
-                print0(ucase ? " NOMINVALUE" : " nominvalue");
-            }
+            print0(ucase ? " NOMINVALUE" : " nominvalue");
         }
 
         if (x.getCycle() != null) {
             if (x.getCycle().booleanValue()) {
                 print0(ucase ? " CYCLE" : " cycle");
             } else {
-                if (DbType.postgresql  == dbType) {
-                    print0(ucase ? " NO CYCLE" : " no cycle");
-                } else {
-                    print0(ucase ? " NOCYCLE" : " nocycle");
-                }
+                print0(ucase ? " NOCYCLE" : " nocycle");
             }
         }
 
@@ -7880,11 +7807,7 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         }
 
         if (x.isNoMaxValue()) {
-            if (DbType.postgresql == dbType) {
-                print0(ucase ? " NO MAXVALUE" : " no maxvalue");
-            } else {
-                print0(ucase ? " NOMAXVALUE" : " nomaxvalue");
-            }
+            print0(ucase ? " NOMAXVALUE" : " nomaxvalue");
         }
 
         if (x.getMinValue() != null) {
@@ -7893,22 +7816,14 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         }
 
         if (x.isNoMinValue()) {
-            if (DbType.postgresql == dbType) {
-                print0(ucase ? " NO MINVALUE" : " no minvalue");
-            } else {
-                print0(ucase ? " NOMINVALUE" : " nominvalue");
-            }
+            print0(ucase ? " NOMINVALUE" : " nominvalue");
         }
 
         if (x.getCycle() != null) {
             if (x.getCycle().booleanValue()) {
                 print0(ucase ? " CYCLE" : " cycle");
             } else {
-                if (DbType.postgresql  == dbType) {
-                    print0(ucase ? " NO CYCLE" : " no cycle");
-                } else {
-                    print0(ucase ? " NOCYCLE" : " nocycle");
-                }
+                print0(ucase ? " NOCYCLE" : " nocycle");
             }
         }
 
@@ -9632,25 +9547,6 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         return false;
     }
 
-    @Override
-    public boolean visit(SQLShowPartitionsStmt x) {
-        print0(ucase ? "SHOW PARTITIONS " : "show partitions ");
-        x.getTableSource().accept(this);
-
-        if (x.getPartition().size() > 0) {
-            print0(ucase ? " PARTITION (" : " partition (");
-            printAndAccept(x.getPartition(), ", ");
-            print0(")");
-        }
-
-        SQLExpr where = x.getWhere();
-        if (where != null) {
-            print0(ucase ? " WHERE " : " where ");
-            where.accept(this);
-        }
-
-        return false;
-    }
 
     @Override
     public boolean visit(SQLValuesExpr x) {
@@ -9956,66 +9852,6 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         return false;
     }
 
-    public boolean visit(SQLExportTableStatement x) {
-        print0(ucase ? "EXPORT TABLE " : "export table ");
-        x.getTable().accept(this);
-
-        if (x.getPartition().size() > 0) {
-            print0(ucase ? " PARTITION (" : " partition (");
-            printAndAccept(x.getPartition(), ", ");
-            print(')');
-        }
-
-        final SQLExpr to = x.getTo();
-        if (to != null) {
-            print0(ucase ? " TO " : " to ");
-            to.accept(this);
-        }
-        return false;
-    }
-
-    public boolean visit(SQLImportTableStatement x) {
-        if (x.isExtenal()) {
-            print0(ucase ? "IMPORT EXTERNAL" : "import external");
-        } else {
-            print0(ucase ? "IMPORT" : "import");
-        }
-
-        final SQLExprTableSource table = x.getTable();
-        if (table != null) {
-            print0(ucase ? " TABLE " : " table ");
-            table.accept(this);
-        }
-
-        if (x.getPartition().size() > 0) {
-            print0(ucase ? " PARTITION (" : " partition (");
-            printAndAccept(x.getPartition(), ", ");
-            print(')');
-        }
-
-        final SQLExpr from = x.getFrom();
-        if (from != null) {
-            print0(ucase ? " FROM " : " from ");
-            from.accept(this);
-        }
-
-        final SQLExpr location = x.getLocation();
-        if (location != null) {
-            print0(ucase ? " LOCATION " : " location ");
-            location.accept(this);
-        }
-
-        if(x.getVersion() != null) {
-            print0(ucase ? " VERSIOIN = " : " version = ");
-            x.getVersion().accept(this);
-        }
-
-        if (x.isUsingBuild()) {
-            print0(ucase ? " BUILD = 'Y'" : " build = 'y'");
-        }
-
-        return false;
-    }
 
     public boolean visit(SQLTableSampling x) {
         print0(ucase ? "TABLESAMPLE " : "tablesample ");
@@ -10270,34 +10106,6 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
         return false;
     }
 
-    @Override
-    public boolean visit(SQLShowStatisticStmt x) {
-        if (x.isFull()) {
-            print0(ucase ? "SHOW FULL STATS" : "show full stats");
-        } else {
-            print0(ucase ? "SHOW STATS" : "show stats");
-        }
-
-        List<SQLAssignItem> partitions = x.getPartitions();
-        if (!partitions.isEmpty()) {
-            print0(ucase ? " PARTITION (" : " partition (");
-            printAndAccept(partitions, ", ");
-            print(')');
-        }
-        return false;
-    }
-
-    @Override
-    public boolean visit(SQLShowStatisticListStmt x) {
-        print0(ucase ? "SHOW STATISTIC_LIST" : "show statistic_list");
-
-        SQLExprTableSource table = x.getTableSource();
-        if (table != null) {
-            print(' ');
-            table.accept(this);
-        }
-        return false;
-    }
 
     @Override
     public boolean visit(SQLShowPackagesStatement x) {
@@ -10655,12 +10463,7 @@ public class SQLASTOutputVisitor extends SQLASTVisitorAdapter implements Paramet
 
     public void visitStatementList(List<SQLStatement> statementList) {
 
-        boolean printStmtSeperator;
-        if (DbType.sqlserver == dbType) {
-            printStmtSeperator = false;
-        } else {
-            printStmtSeperator = DbType.oracle != dbType;
-        }
+        boolean printStmtSeperator = DbType.oracle != dbType;
 
         for (int i = 0, size = statementList.size(); i < size; i++) {
             SQLStatement stmt = statementList.get(i);

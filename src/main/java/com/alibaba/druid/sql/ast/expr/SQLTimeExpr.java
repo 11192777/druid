@@ -17,7 +17,6 @@ package com.alibaba.druid.sql.ast.expr;
 
 import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.ast.*;
-import com.alibaba.druid.sql.ast.statement.SQLCharacterDataType;
 import com.alibaba.druid.sql.visitor.SQLASTVisitor;
 
 import java.text.SimpleDateFormat;
@@ -145,7 +144,7 @@ public class SQLTimeExpr extends SQLExprImpl implements SQLLiteralExpr, SQLValua
         return Collections.emptyList();
     }
 
-    public static long supportDbTypes = DbType.of(DbType.mysql, DbType.oracle, DbType.presto, DbType.postgresql);
+    public static long supportDbTypes = DbType.of(DbType.mysql, DbType.oracle);
 
     public static boolean isSupport(DbType dbType) {
         return (dbType.mask & supportDbTypes) != 0;

@@ -83,10 +83,6 @@ public class SQLParser {
                 || token == Token.SELECT
                 || token == Token.FROM
                 || token == Token.WHERE) {
-            if (token == Token.WHERE && dbType == DbType.odps) {
-                return null;
-            }
-
             if (must) {
                 throw new ParserException("illegal alias. " + lexer.info());
             }
@@ -170,14 +166,6 @@ public class SQLParser {
                         return null;
                     }
                     return ident;
-                } else if (hash == FnvHash.Constants.ASOF && dbType == DbType.clickhouse) {
-                    Lexer.SavePoint mark = lexer.mark();
-                    lexer.nextToken();
-                    if (lexer.token == Token.LEFT || lexer.token == Token.JOIN) {
-                        lexer.reset(mark);
-                        return null;
-                    }
-                    return ident;
                 }
             }
         }
@@ -221,35 +209,6 @@ public class SQLParser {
                     }
                     break;
                 }
-                case FOR:
-                case GRANT:
-                case CHECK:
-                case LEAVE:
-                case TRIGGER:
-                case CREATE:
-                case ASC:
-                case DESC:
-                    if (dbType == DbType.odps || dbType == DbType.hive) {
-                        String strVal = lexer.stringVal();
-                        lexer.nextToken();
-                        return strVal;
-                    }
-                    break;
-                case TABLE:
-                    if (dbType == DbType.odps){
-                        Lexer.SavePoint mark = lexer.mark();
-                        String strVal = lexer.stringVal();
-                        lexer.nextToken();
-                        switch (lexer.token) {
-                            case FROM:
-                            case GROUP:
-                                return strVal;
-                            default:
-                                lexer.reset(mark);
-                                break;
-                        }
-                    }
-                    break;
                 case SHOW:
                 case REFERENCES:
                 case REPEAT:
@@ -383,27 +342,8 @@ public class SQLParser {
                 case SHOW:
                 case SEQUENCE:
                 case TO:
-                case REFERENCES:
-                    if (dbType == DbType.odps || dbType == DbType.hive) {
-                        alias = lexer.stringVal();
-                        lexer.nextToken();
-                        break;
-                    }
-                    break;
                 case GROUP:
                 case ORDER:
-                case DEFAULT:
-                    if (dbType == DbType.odps || dbType == DbType.hive) {
-                        Lexer.SavePoint mark = lexer.mark();
-                        alias = lexer.stringVal();
-                        lexer.nextToken();
-                        if (lexer.token == Token.BY) {
-                            lexer.reset(mark);
-                            alias = null;
-                        }
-                        break;
-                    }
-                    break;
                 default:
                     break;
             }

@@ -163,13 +163,6 @@ public class SQLCreateTableParser extends SQLDDLParser {
             createTable.setSelect(select);
         }
 
-        if (lexer.token == Token.WITH && DbType.postgresql == dbType) {
-            lexer.nextToken();
-            accept(Token.LPAREN);
-            parseAssignItems(createTable.getTableOptions(), createTable, false);
-            accept(Token.RPAREN);
-        }
-
         if (lexer.token == Token.TABLESPACE) {
             lexer.nextToken();
             createTable.setTablespace(

@@ -31,7 +31,7 @@ public class SQLParserUtils {
 
     public static SQLStatementParser createSQLStatementParser(String sql, DbType dbType) {
         SQLParserFeature[] features;
-        if (DbType.odps == dbType || DbType.mysql == dbType) {
+        if (DbType.mysql == dbType) {
             features = new SQLParserFeature[] {SQLParserFeature.KeepComments};
         } else {
             features = new SQLParserFeature[] {};
@@ -64,16 +64,7 @@ public class SQLParserUtils {
             case oceanbase_oracle:
                 return new OracleStatementParser(sql, features);
             case mysql:
-            case mariadb:
-            case drds: {
                 return new MySqlStatementParser(sql, features);
-            }
-            case elastic_search: {
-                MySqlStatementParser parser = new MySqlStatementParser(sql, features);
-                parser.dbType = dbType;
-                parser.exprParser.dbType = dbType;
-                return parser;
-            }
             default:
                 return new SQLStatementParser(sql, dbType);
         }
@@ -88,13 +79,7 @@ public class SQLParserUtils {
             case oracle:
                 return new OracleExprParser(sql, features);
             case mysql:
-            case mariadb:
                 return new MySqlExprParser(sql, features);
-            case elastic_search: {
-                MySqlExprParser parser = new MySqlExprParser(sql, features);
-                parser.dbType = dbType;
-                return parser;
-            }
             default:
                 return new SQLExprParser(sql, dbType, features);
         }
@@ -113,13 +98,7 @@ public class SQLParserUtils {
             case oracle:
                 return new OracleLexer(sql);
             case mysql:
-            case mariadb:
                 return new MySqlLexer(sql);
-            case elastic_search: {
-                MySqlLexer lexer = new MySqlLexer(sql);
-                lexer.dbType = dbType;
-                return lexer;
-            }
             default:
                 return new Lexer(sql, null, dbType);
         }

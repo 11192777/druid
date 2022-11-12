@@ -29,12 +29,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
 
-import static com.alibaba.druid.sql.parser.CharTypes.*;
 import static com.alibaba.druid.sql.parser.CharTypes.isFirstIdentifierChar;
 import static com.alibaba.druid.sql.parser.CharTypes.isIdentifierChar;
 import static com.alibaba.druid.sql.parser.CharTypes.isWhitespace;
 import static com.alibaba.druid.sql.parser.LayoutCharacters.EOI;
-import static com.alibaba.druid.sql.parser.SQLParserFeature.*;
 import static com.alibaba.druid.sql.parser.SQLParserFeature.KeepComments;
 import static com.alibaba.druid.sql.parser.SQLParserFeature.KeepSourceLocation;
 import static com.alibaba.druid.sql.parser.SQLParserFeature.OptimizedForParameterized;
@@ -129,12 +127,6 @@ public class Lexer {
         this(input, true);
         this.commentHandler = commentHandler;
         this.dbType = dbType;
-
-        if (DbType.sqlite == dbType) {
-            this.keywords = Keywords.SQLITE_KEYWORDS;
-        } else if (DbType.dm == dbType) {
-            this.keywords = Keywords.DM_KEYWORDS;
-        }
     }
 
     public boolean isKeepComments() {
@@ -691,19 +683,6 @@ public class Lexer {
                     pos = index + 2;
                     ch = charAt(pos);
                     continue;
-                } else if (pos + 2 < text.length()
-                        && text.charAt(pos + 1) == ' '
-                        && text.charAt(pos + 2) == '*'
-                        && dbType == DbType.odps
-                ) {
-                    int index = text.indexOf("* /", pos + 3);
-                    if (index == -1) {
-                        return SQLType.UNKNOWN;
-                    }
-
-                    pos = index + 3;
-                    ch = charAt(pos);
-                    continue;
                 }
             }
 
@@ -803,10 +782,7 @@ public class Lexer {
         } else if (hashCode == FnvHash.Constants.READ) {
             return SQLType.READ;
         } else if (hashCode == FnvHash.Constants.WITH) {
-            if (dbType == DbType.mysql
-                    || dbType == DbType.hive
-                    || dbType == DbType.odps
-                    || dbType == DbType.oracle) {
+            if (dbType == DbType.mysql || dbType == DbType.oracle) {
                 return SQLType.SELECT;
             }
             return SQLType.UNKNOWN;
@@ -1080,7 +1056,7 @@ public class Lexer {
                         scanChar();
                         token = COLONCOLON;
                     } else {
-                        if (isEnabled(SQLParserFeature.TDDLHint) || dbType == DbType.hive || dbType == DbType.odps) {
+                        if (isEnabled(SQLParserFeature.TDDLHint)) {
                             token = COLON;
                             return;
                         }
@@ -1127,28 +1103,7 @@ public class Lexer {
                     return;
                 case '?':
                     scanChar();
-                    if (ch == '?' && DbType.postgresql == dbType) {
-                        scanChar();
-                        if (ch == '|') {
-                            scanChar();
-                            token = Token.QUESBAR;
-                        } else {
-                            token = Token.QUESQUES;
-                        }
-                    } else if (ch == '|' && DbType.postgresql == dbType) {
-                        scanChar();
-                        if (ch == '|') {
-                            unscan();
-                            token = Token.QUES;
-                        } else {
-                            token = Token.QUESBAR;
-                        }
-                    } else if (ch == '&' && DbType.postgresql == dbType) {
-                        scanChar();
-                        token = Token.QUESAMP;
-                    } else {
-                        token = Token.QUES;
-                    }
+                    token = Token.QUES;
                     return;
                 case ';':
                     scanChar();
@@ -1938,18 +1893,7 @@ public class Lexer {
                         putChar((char) 0x1A); // ctrl + Z
                         break;
                     case 'u':
-                        if (dbType == DbType.hive) {
-                            char c1 = charAt(++pos);
-                            char c2 = charAt(++pos);
-                            char c3 = charAt(++pos);
-                            char c4 = charAt(++pos);
-
-                            int intVal = Integer.parseInt(new String(new char[]{c1, c2, c3, c4}), 16);
-
-                            putChar((char) intVal);
-                        } else {
-                            putChar(ch);
-                        }
+                        putChar(ch);
                         break;
                     default:
                         putChar(ch);
@@ -1990,21 +1934,12 @@ public class Lexer {
     }
 
     public void scanVariable() {
-        if (ch != ':' && ch != '#' && ch != '$' && !(ch == '@' && dbType == DbType.odps)) {
-            throw new ParserException("illegal variable. " + info());
-        }
-
         mark = pos;
         bufPos = 1;
         char ch;
 
         final char c1 = charAt(pos + 1);
-        if (c1 == '>' && DbType.postgresql == dbType) {
-            pos += 2;
-            token = Token.MONKEYS_AT_GT;
-            this.ch = charAt(++pos);
-            return;
-        } else if (c1 == '{') {
+        if (c1 == '{') {
             pos++;
             bufPos++;
 
@@ -2026,14 +1961,6 @@ public class Lexer {
             bufPos++;
 
             this.ch = charAt(pos);
-
-            if (dbType == DbType.odps) {
-                while (isDigit(this.ch)) {
-                    ++pos;
-                    bufPos++;
-                    this.ch = charAt(pos);
-                }
-            }
 
             stringVal = addSymbol();
             token = Token.VARIANT;
@@ -2119,12 +2046,6 @@ public class Lexer {
             mark = pos;
             bufPos = 0;
             scanChar();
-
-            if (dbType == DbType.odps && ch == ' ') {
-                mark = pos;
-                bufPos = 0;
-                scanChar();
-            }
         }
 
         // /*+ */
@@ -2463,7 +2384,7 @@ public class Lexer {
         numberExp = false;
         bufPos = 0;
 
-        if (ch == '0' && charAt(pos + 1) == 'b' && dbType != DbType.odps) {
+        if (ch == '0' && charAt(pos + 1) == 'b') {
             int i = 2;
             int mark = pos + 2;
             for (;;++i) {
@@ -2548,7 +2469,7 @@ public class Lexer {
         } else {
             if (isFirstIdentifierChar(ch)
                     && ch != '）'
-                    && !(ch == 'b' && bufPos == 1 && charAt(pos - 1) == '0' && dbType != DbType.odps)
+                    && !(ch == 'b' && bufPos == 1 && charAt(pos - 1) == '0')
             ) {
                 bufPos++;
                 for (;;) {
@@ -2564,7 +2485,6 @@ public class Lexer {
                     }
 
                     bufPos++;
-                    continue;
                 }
 
                 stringVal = addSymbol();

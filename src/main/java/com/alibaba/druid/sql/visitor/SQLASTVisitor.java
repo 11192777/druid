@@ -247,7 +247,6 @@ import com.alibaba.druid.sql.ast.statement.SQLErrorLoggingClause;
 import com.alibaba.druid.sql.ast.statement.SQLExplainAnalyzeStatement;
 import com.alibaba.druid.sql.ast.statement.SQLExplainStatement;
 import com.alibaba.druid.sql.ast.statement.SQLExportDatabaseStatement;
-import com.alibaba.druid.sql.ast.statement.SQLExportTableStatement;
 import com.alibaba.druid.sql.ast.statement.SQLExprHint;
 import com.alibaba.druid.sql.ast.statement.SQLExprStatement;
 import com.alibaba.druid.sql.ast.statement.SQLExprTableSource;
@@ -258,7 +257,6 @@ import com.alibaba.druid.sql.ast.statement.SQLForeignKeyImpl;
 import com.alibaba.druid.sql.ast.statement.SQLGrantStatement;
 import com.alibaba.druid.sql.ast.statement.SQLIfStatement;
 import com.alibaba.druid.sql.ast.statement.SQLImportDatabaseStatement;
-import com.alibaba.druid.sql.ast.statement.SQLImportTableStatement;
 import com.alibaba.druid.sql.ast.statement.SQLInsertStatement;
 import com.alibaba.druid.sql.ast.statement.SQLJoinTableSource;
 import com.alibaba.druid.sql.ast.statement.SQLLateralViewTableSource;
@@ -304,13 +302,10 @@ import com.alibaba.druid.sql.ast.statement.SQLShowIndexesStatement;
 import com.alibaba.druid.sql.ast.statement.SQLShowMaterializedViewStatement;
 import com.alibaba.druid.sql.ast.statement.SQLShowOutlinesStatement;
 import com.alibaba.druid.sql.ast.statement.SQLShowPackagesStatement;
-import com.alibaba.druid.sql.ast.statement.SQLShowPartitionsStmt;
 import com.alibaba.druid.sql.ast.statement.SQLShowProcessListStatement;
 import com.alibaba.druid.sql.ast.statement.SQLShowQueryTaskStatement;
 import com.alibaba.druid.sql.ast.statement.SQLShowRecylebinStatement;
 import com.alibaba.druid.sql.ast.statement.SQLShowSessionStatement;
-import com.alibaba.druid.sql.ast.statement.SQLShowStatisticListStmt;
-import com.alibaba.druid.sql.ast.statement.SQLShowStatisticStmt;
 import com.alibaba.druid.sql.ast.statement.SQLShowTableGroupsStatement;
 import com.alibaba.druid.sql.ast.statement.SQLShowTablesStatement;
 import com.alibaba.druid.sql.ast.statement.SQLShowUsersStatement;
@@ -2307,14 +2302,6 @@ public interface SQLASTVisitor {
 
     }
 
-    default void endVisit(SQLShowPartitionsStmt x) {
-
-    }
-
-    default boolean visit(SQLShowPartitionsStmt x) {
-        return true;
-    }
-
     default void endVisit(SQLValuesExpr x) {
 
     }
@@ -2436,22 +2423,6 @@ public interface SQLASTVisitor {
 
     }
 
-    default boolean visit(SQLExportTableStatement x) {
-        return true;
-    }
-
-    default void endVisit(SQLExportTableStatement x) {
-
-    }
-
-    default boolean visit(SQLImportTableStatement x) {
-        return true;
-    }
-
-    default void endVisit(SQLImportTableStatement x) {
-
-    }
-
     default boolean visit(SQLTableSampling x) {
         return true;
     }
@@ -2545,22 +2516,6 @@ public interface SQLASTVisitor {
     }
 
     default void endVisit(SQLPurgeRecyclebinStatement x) {
-
-    }
-
-    default boolean visit(SQLShowStatisticStmt x) {
-        return true;
-    }
-
-    default void endVisit(SQLShowStatisticStmt x) {
-
-    }
-
-    default boolean visit(SQLShowStatisticListStmt x) {
-        return true;
-    }
-
-    default void endVisit(SQLShowStatisticListStmt x) {
 
     }
 

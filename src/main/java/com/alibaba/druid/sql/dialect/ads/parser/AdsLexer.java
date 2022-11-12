@@ -1,6 +1,5 @@
 package com.alibaba.druid.sql.dialect.ads.parser;
 
-import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.parser.Keywords;
 import com.alibaba.druid.sql.parser.Lexer;
 import com.alibaba.druid.sql.parser.SQLParserFeature;
@@ -33,7 +32,6 @@ public class AdsLexer extends Lexer {
 
     public AdsLexer(String input) {
         super(input);
-        dbType = DbType.ads;
         super.keywords = DEFAULT_ADS_KEYWORDS;
     }
 

@@ -3028,39 +3028,6 @@ public class SchemaStatVisitor extends SQLASTVisitorAdapter {
         return false;
     }
 
-    public boolean visit(SQLExportTableStatement x) {
-        final SQLExprTableSource table = x.getTable();
-        if (table != null) {
-            table.accept(this);
-        }
-
-        for (SQLAssignItem item : x.getPartition()) {
-            final SQLExpr target = item.getTarget();
-            if (target instanceof SQLIdentifierExpr) {
-                ((SQLIdentifierExpr) target).setResolvedTableSource(table);
-                target.accept(this);
-            }
-        }
-
-        return false;
-    }
-
-    public boolean visit(SQLImportTableStatement x) {
-        final SQLExprTableSource table = x.getTable();
-        if (table != null) {
-            table.accept(this);
-        }
-
-        for (SQLAssignItem item : x.getPartition()) {
-            final SQLExpr target = item.getTarget();
-            if (target instanceof SQLIdentifierExpr) {
-                ((SQLIdentifierExpr) target).setResolvedTableSource(table);
-                target.accept(this);
-            }
-        }
-
-        return false;
-    }
 
     public boolean visit(SQLCreateOutlineStatement x) {
         if (repository != null

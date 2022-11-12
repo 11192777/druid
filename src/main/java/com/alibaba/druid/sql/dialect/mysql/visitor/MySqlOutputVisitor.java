@@ -2670,13 +2670,6 @@ public class MySqlOutputVisitor extends SQLASTOutputVisitor implements MySqlASTV
     }
 
     @Override
-    public boolean visit(SQLShowPartitionsStmt x) {
-        print0(ucase ? "SHOW PARTITIONS FROM " : "show partitions from ");
-        x.getTableSource().accept(this);
-        return false;
-    }
-
-    @Override
     public boolean visit(MySqlShowPrivilegesStatement x) {
         print0(ucase ? "SHOW PRIVILEGES" : "show privileges");
         return false;

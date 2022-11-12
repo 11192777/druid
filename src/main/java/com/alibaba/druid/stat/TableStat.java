@@ -424,9 +424,6 @@ public class TableStat {
                     if (table.indexOf('`') != -1) {
                         dbType = DbType.mysql;
                     }
-                    else if (table.indexOf('[') != -1) {
-                        dbType = DbType.sqlserver;
-                    }
                     else if (table.indexOf('@') != -1) {
                         dbType = DbType.oracle;
                     }

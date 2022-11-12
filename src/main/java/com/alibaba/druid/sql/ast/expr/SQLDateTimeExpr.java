@@ -144,7 +144,7 @@ public class SQLDateTimeExpr extends SQLExprImpl implements SQLLiteralExpr, SQLV
         return Collections.emptyList();
     }
 
-    public static long supportDbTypes = DbType.of(DbType.mysql, DbType.oracle, DbType.presto, DbType.postgresql);
+    public static long supportDbTypes = DbType.of(DbType.mysql, DbType.oracle);
 
     public static boolean isSupport(DbType dbType) {
         return (dbType.mask & supportDbTypes) != 0;
